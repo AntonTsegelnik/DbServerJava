@@ -1,11 +1,50 @@
+import Database.DatabaseHandler;
+import com.rw.Model.RegistrationRequest;
 import com.rw.Model.ServerResponse;
 import com.rw.Model.ClientRequest;
+import com.rw.Model.User;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Main {
+    private static String  loginUser(String loginText, String loginPassword) {
+        DatabaseHandler dbHandler = new DatabaseHandler();
+        User user = new User();
+        user.setUsername(loginText);
+        user.setPassword(loginPassword);
+        ResultSet result = dbHandler.getUser(user);
+
+        int counter = 0;
+
+        try{
+            while(result.next()) {
+                counter++;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (counter >= 1){
+            return "OK";
+        }
+        return "Error";
+    }
+    private static void signUpNewUser(ClientRequest clientRequest) {
+        int role = 1;
+        DatabaseHandler dbHandler = new DatabaseHandler();
+        String username= clientRequest.username;
+        String password= clientRequest.password;
+        if(username == password && password  == "admin"){
+            role = 2;
+        }
+        System.out.println("Sign Up");
+        User user = new User(username,password,role);
+        dbHandler.signUpUser(user);
+    }
+
     public static void main(String[] args) {
         System.out.println("Server is starting...");
         while (true) {
@@ -31,14 +70,24 @@ public class Main {
 
 // сервер ждёт в канале чтения (inputstream) получения данных клиента
                     clientRequest = (ClientRequest) in.readObject();
-                    if (clientRequest.requestType == "registration") {
+                    if (clientRequest.requestType.equals("registration")) {
+                        signUpNewUser(clientRequest);
                         ServerResponse serverResponse = new ServerResponse();
-                        serverResponse.body = "Registration";
+
+
+                        serverResponse.body = "200 OK";
                         out.writeObject(serverResponse);
-                    } else {
+                    }
+                    if (clientRequest.requestType.equals("authorization")){
+                        String res = loginUser(clientRequest.username, clientRequest.password);
+
                         ServerResponse serverResponse = new ServerResponse();
-                        serverResponse.body = clientRequest.password + clientRequest.username;
+                        serverResponse.body = res;
                         out.writeObject(serverResponse);
+                    }
+
+                    else {
+
                     }
 // после получения данных считывает их
 
