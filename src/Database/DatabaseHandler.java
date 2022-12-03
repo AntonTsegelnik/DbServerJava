@@ -1,11 +1,13 @@
 package Database;
 
-import com.rw.Model.Configs;
-import com.rw.Model.Const;
-import com.rw.Model.FlightsRequest;
-import com.rw.Model.User;
+import com.rw.Model.*;
 
+import javax.swing.*;
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 
 public class DatabaseHandler extends Configs {
     Connection dbConnection;
@@ -21,21 +23,29 @@ public class DatabaseHandler extends Configs {
         return dbConnection;
     }
 
-    public ResultSet getFlight(FlightsRequest flightsRequest) {
+    public ArrayList<ServerFlightsResponse> getFlight(FlightsRequest flightsRequest) {
         ResultSet resSet = null;
+        var tickets = new ArrayList<ServerFlightsResponse>();
+
         String select = "SELECT * FROM " + Const.FLIGHTS_TABLE + " WHERE " +
-                //  Const.FLIGHT_DATE +"='%s' AND ".formatted(flights.getDate())  + Const.RAIL_TO +"='%s' AND ".formatted(flights.getWhereTo()) +
+                Const.FLIGHT_DATE +"='%s' AND ".formatted(flightsRequest.Date)  + Const.RAIL_TO +"='%s' AND ".formatted(flightsRequest.getWhereTo()) +
                 Const.RAIL_FROM + "='%s'".formatted(flightsRequest.getWhere());
         try {
             PreparedStatement prSt = getDbConnection().prepareStatement(select);
 
             resSet = prSt.executeQuery(select);
+            while (resSet.next()) {
+                LocalDate date   = LocalDate.parse(resSet.getString(Const.FLIGHT_DATE)) ;
+                String from = resSet.getString( Const.RAIL_FROM);
+                String to = resSet.getString(Const.RAIL_TO);
+                 tickets.add(new ServerFlightsResponse(from,to,date));
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        return resSet;
+        return tickets;
     }
 
     public void signUpUser(User user) {
