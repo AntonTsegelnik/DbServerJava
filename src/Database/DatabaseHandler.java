@@ -38,7 +38,9 @@ public class DatabaseHandler extends Configs {
                 LocalDate date   = LocalDate.parse(resSet.getString(Const.FLIGHT_DATE)) ;
                 String from = resSet.getString( Const.RAIL_FROM);
                 String to = resSet.getString(Const.RAIL_TO);
-                 tickets.add(new ServerFlightsResponse(from,to,date));
+                String time = resSet.getString(Const.TIME);
+                String timeAr = resSet.getString(Const.TIME_AR);
+                 tickets.add(new ServerFlightsResponse(from,to,date,time, timeAr));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

@@ -13,6 +13,8 @@ public  class Const {
     public static final String RAIL_FROM = "rail_from";
 
     public static final String RAIL_TO = "rail_to";
+    public static final String TIME = "dep_time";
+    public static final String TIME_AR = "arr_time";
 
 
 
