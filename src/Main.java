@@ -35,9 +35,7 @@ public class Main {
 
 // сервер ждёт в канале чтения (inputstream) получения данных клиента
                     clientRequest = (ClientRequest) in.readObject();
-                     router(clientRequest, out);
-
-
+                    router(clientRequest, out);
 
 
 // после получения данных считывает их
@@ -78,6 +76,7 @@ public class Main {
             }
         }
     }
+
     public static ServerResponse router(ClientRequest clientRequest, ObjectOutputStream out) throws IOException {
         if (clientRequest.requestType.equals("registration")) {
             RegistrationRequest registrationRequest = (RegistrationRequest) clientRequest;
@@ -89,7 +88,7 @@ public class Main {
             out.writeObject(serverResponse);
 
         }
-        if (clientRequest.requestType.equals("authorization")){
+        if (clientRequest.requestType.equals("authorization")) {
             AuthorizationRequest authorizationRequest = (AuthorizationRequest) clientRequest;
             String res = loginUser(authorizationRequest.username, authorizationRequest.password);
 
@@ -100,17 +99,27 @@ public class Main {
         }
         if (clientRequest.requestType.equals("findTicket")) {
             FlightsRequest flightsRequest = (FlightsRequest) clientRequest;
-           ArrayList<ServerFlightsResponse> res =  findTickets(flightsRequest);
+            ArrayList<ServerFlightsResponse> res = findTickets(flightsRequest);
 
-           out.writeObject(res);
+            out.writeObject(res);
+        }
+        if(clientRequest.requestType.equals("getPrice")){
+            Price price = (Price) clientRequest;
+            var res = getPrice(price);
 
-
-
+            out.writeObject(res);
         }
 
         return null;
     }
-    private static String  loginUser(String loginText, String loginPassword) {
+
+    private static ArrayList<Price> getPrice(Price price) {
+        DatabaseHandler dbHandler= new DatabaseHandler();
+        var result = dbHandler.getPriceFromDb(price);
+        return result;
+    }
+
+    private static String loginUser(String loginText, String loginPassword) {
         DatabaseHandler dbHandler = new DatabaseHandler();
         User user = new User();
         user.setUsername(loginText);
@@ -119,36 +128,38 @@ public class Main {
 
         int counter = 0;
 
-        try{
-            while(result.next()) {
+        try {
+            while (result.next()) {
                 counter++;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        if (counter >= 1){
+        if (counter >= 1) {
             return "OK";
         }
         return "Error";
     }
+
     private static void signUpNewUser(RegistrationRequest registrationRequest) {
         int role = 1;
         DatabaseHandler dbHandler = new DatabaseHandler();
-        String username= registrationRequest.username;
-        String password= registrationRequest.password;
-        if(username == password && password  == "admin"){
+        String username = registrationRequest.username;
+        String password = registrationRequest.password;
+        if (username == password && password == "admin") {
             role = 2;
         }
         System.out.println("Sign Up");
-        User user = new User(username,password,role);
+        User user = new User(username, password, role);
         dbHandler.signUpUser(user);
     }
+
     private static ArrayList<ServerFlightsResponse> findTickets(FlightsRequest flightsRequest) {
 
         DatabaseHandler dbHandler = new DatabaseHandler();
         var flights = dbHandler.getFlight(flightsRequest);
         return flights;
-       // dbHandler.getFlight();
+        // dbHandler.getFlight();
     }
 
 }
