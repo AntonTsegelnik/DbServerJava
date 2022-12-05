@@ -28,17 +28,23 @@ public class DatabaseHandler extends Configs {
         var tickets = new ArrayList<ServerFlightsResponse>();
 
         String select = "SELECT * FROM " + Const.FLIGHTS_TABLE + " WHERE " +
-                Const.FLIGHT_DATE +"='%s' AND ".formatted(flightsRequest.Date)  + Const.RAIL_TO +"='%s' AND ".formatted(flightsRequest.getWhereTo()) +
+                Const.FLIGHT_DATE +"='%s' AND ".formatted(flightsRequest.getDate())  + Const.RAIL_TO +"='%s' AND ".formatted(flightsRequest.getWhereTo()) +
                 Const.RAIL_FROM + "='%s'".formatted(flightsRequest.getWhere());
         try {
             PreparedStatement prSt = getDbConnection().prepareStatement(select);
 
             resSet = prSt.executeQuery(select);
             while (resSet.next()) {
+                String flightCode = resSet.getString(Const.FLIGHT_CODE);
                 LocalDate date   = LocalDate.parse(resSet.getString(Const.FLIGHT_DATE)) ;
                 String from = resSet.getString( Const.RAIL_FROM);
                 String to = resSet.getString(Const.RAIL_TO);
-                 tickets.add(new ServerFlightsResponse(from,to,date));
+                String time = resSet.getString(Const.TIME);
+                String timeAr = resSet.getString(Const.TIME_AR);
+                int couple = resSet.getInt(Const.NUM_OF_COUPE);
+                int reserved = resSet.getInt(Const.NUM_OF_RES);
+                int seats = resSet.getInt(Const.NUM_OF_SEATS);
+                 tickets.add(new ServerFlightsResponse(from,to,date,time, timeAr,flightCode,couple,reserved,seats));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -79,5 +85,27 @@ public class DatabaseHandler extends Configs {
             throw new RuntimeException(e);
         }
         return resSet;
+    }
+
+    public ArrayList<Price> getPriceFromDb(Price price) {
+        var prices = new ArrayList<Price>();
+        String select = "SELECT * FROM " + Const.PRICE_TABLE + " WHERE " +
+                Const.FLIGHT_CODE + "='%s'".formatted(price.getFlightCode());
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+           var resSet = prSt.executeQuery(select);
+           while (resSet.next()){
+               String flcode = resSet.getString("flight_code");
+               String seatType = resSet.getString("seat_type");
+               Double prc = resSet.getDouble("ticket_price");
+                prices.add(new Price(flcode,seatType,prc)) ;
+           }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return prices;
     }
 }
