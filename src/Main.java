@@ -73,11 +73,13 @@ public class Main {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
         }
     }
 
-    public static ServerResponse router(ClientRequest clientRequest, ObjectOutputStream out) throws IOException {
+    public static ServerResponse router(ClientRequest clientRequest, ObjectOutputStream out) throws IOException, SQLException, ClassNotFoundException {
         if (clientRequest.requestType.equals("registration")) {
             RegistrationRequest registrationRequest = (RegistrationRequest) clientRequest;
             signUpNewUser(registrationRequest);
@@ -92,9 +94,8 @@ public class Main {
             AuthorizationRequest authorizationRequest = (AuthorizationRequest) clientRequest;
             String res = loginUser(authorizationRequest.username, authorizationRequest.password);
 
-            ServerResponse serverResponse = new ServerResponse();
-            serverResponse.body = res;
-            out.writeObject(serverResponse);
+
+            out.writeObject(res);
 
         }
         if (clientRequest.requestType.equals("findTicket")) {
@@ -103,50 +104,53 @@ public class Main {
 
             out.writeObject(res);
         }
-        if(clientRequest.requestType.equals("getPrice")){
+        if (clientRequest.requestType.equals("getPrice")) {
             Price price = (Price) clientRequest;
             var res = getPrice(price);
 
             out.writeObject(res);
+        }
+        if (clientRequest.requestType.equals("setPassenger")) {
+            var passenger = (Passenger) clientRequest;
+            var pasIdGenerated = setPassenger(passenger);
+
+                out.writeObject(pasIdGenerated);
+
+        }
+        if (clientRequest.requestType.equals("bookTicket")){
+            var ticket = (Ticket)clientRequest;
+            var dbHandler = new DatabaseHandler();
+            var bookingTicket = dbHandler.setTicketInDbBooking(ticket);
+            out.writeObject(bookingTicket);
         }
 
         return null;
     }
 
     private static ArrayList<Price> getPrice(Price price) {
-        DatabaseHandler dbHandler= new DatabaseHandler();
+        DatabaseHandler dbHandler = new DatabaseHandler();
         var result = dbHandler.getPriceFromDb(price);
         return result;
     }
 
     private static String loginUser(String loginText, String loginPassword) {
+        String username = "";
         DatabaseHandler dbHandler = new DatabaseHandler();
         User user = new User();
         user.setUsername(loginText);
         user.setPassword(loginPassword);
-        ResultSet result = dbHandler.getUser(user);
+        username = dbHandler.getUser(user);
 
-        int counter = 0;
-
-        try {
-            while (result.next()) {
-                counter++;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        if (counter >= 1) {
-            return "OK";
-        }
-        return "Error";
+        return username;
     }
+
 
     private static void signUpNewUser(RegistrationRequest registrationRequest) {
         int role = 1;
         DatabaseHandler dbHandler = new DatabaseHandler();
         String username = registrationRequest.username;
         String password = registrationRequest.password;
-        if (username == password && password == "admin") {
+        if (username.equals(password) && password.equals("admin")) {
             role = 2;
         }
         System.out.println("Sign Up");
@@ -160,6 +164,12 @@ public class Main {
         var flights = dbHandler.getFlight(flightsRequest);
         return flights;
         // dbHandler.getFlight();
+    }
+
+    private static int setPassenger(Passenger passenger) {
+        var dbHandler = new DatabaseHandler();
+        return dbHandler.setPassengerInDb(passenger);
+
     }
 
 }
