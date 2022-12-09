@@ -1,13 +1,12 @@
 package com.rw.Model;
 
-public class User {
+public class User extends ClientRequest{
 
     private String username;
     private String password;
     private int role;
 
     public User(){
-    this.role = 1;
     }
     public User(String username, String password, int role){
 

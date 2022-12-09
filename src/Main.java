@@ -79,7 +79,7 @@ public class Main {
         }
     }
 
-    public static ServerResponse router(ClientRequest clientRequest, ObjectOutputStream out) throws IOException, SQLException, ClassNotFoundException {
+    public static void router(ClientRequest clientRequest, ObjectOutputStream out) throws IOException, SQLException, ClassNotFoundException {
         if (clientRequest.requestType.equals("registration")) {
             RegistrationRequest registrationRequest = (RegistrationRequest) clientRequest;
             signUpNewUser(registrationRequest);
@@ -92,7 +92,7 @@ public class Main {
         }
         if (clientRequest.requestType.equals("authorization")) {
             AuthorizationRequest authorizationRequest = (AuthorizationRequest) clientRequest;
-            String res = loginUser(authorizationRequest.username, authorizationRequest.password);
+            var res = loginUser(authorizationRequest.username, authorizationRequest.password);
 
 
             out.writeObject(res);
@@ -123,8 +123,46 @@ public class Main {
             var bookingTicket = dbHandler.setTicketInDbBooking(ticket);
             out.writeObject(bookingTicket);
         }
+        if (clientRequest.requestType.equals("getTickets")){
+            var user = (AuthorizationRequest)clientRequest;
+            var dbHandler = new DatabaseHandler();
+            var getUsersPassengersId = dbHandler.getUsersPassengersId(user.username);
+            var tickets = dbHandler.getTickets(getUsersPassengersId);
 
-        return null;
+            out.writeObject(tickets);
+        }
+        if (clientRequest.requestType.equals("getFlights")){
+
+            var dbHandler = new DatabaseHandler();
+            var flights = dbHandler.getFlights();
+
+            out.writeObject(flights);
+        }
+        if (clientRequest.requestType.equals("deleteFlight")){
+            var  flight = (FlightsRequest) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.deleteFlight(flight.getFlightCode());
+            var servresp = new ServerResponse();
+            servresp.body = "ok";
+            out.writeObject(servresp);
+        }
+        if (clientRequest.requestType.equals("addFlight")){
+            var  flight = (FlightsRequest) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.addFlight(flight);
+            var servresp = new ServerResponse();
+            servresp.body = "ok";
+            out.writeObject(servresp);
+        }
+        if (clientRequest.requestType.equals("getPassengers")){
+            var pasRequest = (Passenger)clientRequest;
+            var dbHandler = new DatabaseHandler();
+            var passengers = dbHandler.getPassengers();
+
+
+            out.writeObject(passengers);
+        }
+
     }
 
     private static ArrayList<Price> getPrice(Price price) {
@@ -133,15 +171,15 @@ public class Main {
         return result;
     }
 
-    private static String loginUser(String loginText, String loginPassword) {
+    private static User loginUser(String loginText, String loginPassword) {
         String username = "";
         DatabaseHandler dbHandler = new DatabaseHandler();
         User user = new User();
         user.setUsername(loginText);
         user.setPassword(loginPassword);
-        username = dbHandler.getUser(user);
+        user = dbHandler.getUser(user);
 
-        return username;
+        return user;
     }
 
 
@@ -151,7 +189,7 @@ public class Main {
         String username = registrationRequest.username;
         String password = registrationRequest.password;
         if (username.equals(password) && password.equals("admin")) {
-            role = 2;
+            role = 0;
         }
         System.out.println("Sign Up");
         User user = new User(username, password, role);

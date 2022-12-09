@@ -17,6 +17,15 @@ public class Passenger extends ClientRequest{
         PassportNum = passportNum;
         Username = username;
     }
+    public Passenger( String firstName, String lastName, String country, String passportNum, int PassId, String username) {
+
+        FirstName = firstName;
+        LastName = lastName;
+        Country = country;
+        PassportNum = passportNum;
+        this.PassId = PassId;
+        Username = username;
+    }
 
     public int getPassId() {
         return PassId;

@@ -32,6 +32,8 @@ public class Const {
     public static final String SEAT_TYPE = "seat_type";
     public static final String TICKET_CODE = "ticket_code";
     public static final String BOOKING_TABLE = "booking";
+    public static final String FLIGHT_DISTANCE = "flight_distance";
+    public static final String ARR_DATE = "arr_date";
 
 
 

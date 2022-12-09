@@ -16,6 +16,14 @@ public class Ticket extends ClientRequest {
         PassId = passId;
         FlightCode = flightCode;
     }
+    public Ticket(int trainCar, int seatNum, String seatType, String flightCode, int ticketCode) {
+        TrainCar = trainCar;
+        SeatNum = seatNum;
+        SeatType = seatType;
+        FlightCode = flightCode;
+        TicketCode =ticketCode;
+    }
+
 
     public int getTicketCode() {
         return TicketCode;

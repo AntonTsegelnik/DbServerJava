@@ -71,7 +71,7 @@ public class DatabaseHandler extends Configs {
         }
     }
 
-    public String getUser(User user) {
+    public User getUser(User user) {
         ResultSet resSet = null;
         String result = "";
         String select = "SELECT * FROM " + Const.USER_TABLE + " WHERE " +
@@ -92,7 +92,7 @@ public class DatabaseHandler extends Configs {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        return user.getUsername();
+        return user;
     }
 
     public ArrayList<Price> getPriceFromDb(Price price) {
@@ -220,7 +220,8 @@ public class DatabaseHandler extends Configs {
             throw new RuntimeException(e);
         }
     }
-        public void updateNumOfSeats(Ticket ticket) throws SQLException, ClassNotFoundException {
+
+    public void updateNumOfSeats(Ticket ticket) throws SQLException, ClassNotFoundException {
         String dbType = "";
         if (ticket.getSeatType().equals("Купейный")) {
             dbType = Const.NUM_OF_COUPE;
@@ -241,6 +242,177 @@ public class DatabaseHandler extends Configs {
         PreparedStatement stmt = getDbConnection().prepareStatement(query6);
         stmt.executeUpdate(query6);
 
+
+    }
+
+    public ArrayList<Integer> getUsersPassengersId(String username) {
+        ResultSet resSet = null;
+        ArrayList<Integer> passengersId = new ArrayList<Integer>();
+        String result = "";
+        String select = "SELECT * FROM " + Const.PASSENGER_TABLE + " WHERE " +
+                Const.USERNAME + "='%s' ".formatted(username);
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+            resSet = prSt.executeQuery(select);
+            while (resSet.next()) {
+                int pasId = resSet.getInt(Const.PASSENGER_ID);
+                System.out.println(pasId);
+                passengersId.add(pasId);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return passengersId;
+    }
+
+    public ArrayList<Ticket> getTickets(ArrayList<Integer> passengersId) {
+        ResultSet resSet = null;
+        ArrayList<Ticket> tickets = new ArrayList<Ticket>();
+        String result = "";
+        for (var item : passengersId
+        ) {
+            String select = "SELECT * FROM " + Const.TICKET_TABLE + " WHERE " +
+                    Const.PASSENGER_ID + "='%s' ".formatted(item);
+            try {
+                PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+                resSet = prSt.executeQuery(select);
+                while (resSet.next()) {
+
+                    var tr = resSet.getInt(Const.TRAIN_CAR);
+                    var sn = resSet.getInt(Const.SEAT_NUM);
+                    var st = resSet.getString(Const.SEAT_TYPE);
+                    var fc = resSet.getString(Const.FLIGHT_CODE);
+                    var tc = resSet.getInt(Const.TICKET_CODE);
+
+                    tickets.add(new Ticket(tr, sn, st, fc, tc));
+                    System.out.println();
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+
+        return tickets;
+
+    }
+
+    public ArrayList<FlightsRequest> getFlights() {
+        ResultSet resSet = null;
+        ArrayList<FlightsRequest> flights = new ArrayList<FlightsRequest>();
+        String result = "";
+
+        String select = "SELECT * FROM " + Const.FLIGHTS_TABLE;
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+            resSet = prSt.executeQuery(select);
+            while (resSet.next()) {
+
+                var fc = resSet.getString(Const.FLIGHT_CODE);
+                var fd = resSet.getDouble(Const.FLIGHT_DISTANCE);
+                var dd = LocalDate.parse(resSet.getString(Const.FLIGHT_DATE));
+                var ad = LocalDate.parse(resSet.getString(Const.ARR_DATE));
+                var nc = resSet.getInt(Const.NUM_OF_COUPE);
+                var nr = resSet.getInt(Const.NUM_OF_RES);
+                var ns = resSet.getInt(Const.NUM_OF_SEATS);
+                var dt = resSet.getString(Const.TIME);
+                var at = resSet.getString(Const.TIME_AR);
+                var wh = resSet.getString(Const.RAIL_FROM);
+                var rt = resSet.getString(Const.RAIL_TO);
+
+                flights.add(new FlightsRequest(wh, rt, dd, dt, at, fc, nc, nr, ns, ad, fd));
+
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        return flights;
+
+    }
+
+    public void deleteFlight(String flightCode) throws SQLException, ClassNotFoundException {
+        ResultSet resSet = null;
+        String result = "";
+
+        String delete = "DELETE FROM " + Const.FLIGHTS_TABLE +
+                " WHERE " + Const.FLIGHT_CODE + " ='%s' ".formatted(flightCode);
+
+        // PreparedStatement prSt = getDbConnection().prepareStatement(select);
+        PreparedStatement stmt = getDbConnection().prepareStatement(delete);
+        stmt.executeUpdate(delete);
+    }
+
+    public void addFlight(FlightsRequest flight) {
+        String insert = "INSERT INTO " + Const.FLIGHTS_TABLE + "(" +
+                Const.FLIGHT_CODE + "," + Const.FLIGHT_DISTANCE + ","
+                + Const.FLIGHT_DATE + "," + Const.ARR_DATE + ","
+                + Const.NUM_OF_COUPE + "," + Const.NUM_OF_RES + ","
+                + Const.NUM_OF_SEATS + "," + Const.TIME + ","
+                + Const.TIME_AR + ","
+                + Const.RAIL_FROM + "," + Const.RAIL_TO + ")" +
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(insert);
+            prSt.setString(1, flight.getFlightCode());
+            prSt.setDouble(2, flight.getFlightDistance());
+            prSt.setString(3, flight.getDate().toString());
+            prSt.setString(4, flight.getDateAr().toString());
+            prSt.setInt(5, flight.getCoupe());
+            prSt.setInt(6, flight.getRes());
+            prSt.setInt(7, flight.getSeats());
+            prSt.setString(8, flight.getTime());
+            prSt.setString(9, flight.getTimeAr());
+            prSt.setString(10, flight.getWhere());
+            prSt.setString(11, flight.getWhereTo());
+            prSt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public ArrayList<Passenger> getPassengers() {
+        ResultSet resSet = null;
+        ArrayList<Passenger> passengers = new ArrayList<Passenger>();
+        String result = "";
+
+        String select = "SELECT * FROM " + Const.PASSENGER_TABLE;
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+            resSet = prSt.executeQuery(select);
+            while (resSet.next()) {
+                var firstname = resSet.getString(Const.FIRST_NAME);
+                var lastName = resSet.getString(Const.LAST_NAME);
+                var passId = resSet.getInt(Const.PASSENGER_ID);
+                var country = resSet.getString(Const.COUNTRY);
+                var pasNum = resSet.getString(Const.PASSPORT_NUM);
+                var username = resSet.getString(Const.USERNAME);
+                passengers.add(new Passenger(firstname,lastName,country,pasNum,passId, username));
+
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        return passengers;
 
     }
 }
