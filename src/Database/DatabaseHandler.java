@@ -59,6 +59,7 @@ public class DatabaseHandler extends Configs {
                 Const.USERNAME + "," + Const.USER_PASSWORD + "," + Const.USER_ROLE + ")" +
                 "VALUES(?,?,?)";
         try {
+
             PreparedStatement prSt = getDbConnection().prepareStatement(insert);
             prSt.setString(1, user.getUsername());
             prSt.setString(2, user.getPassword());
@@ -83,9 +84,11 @@ public class DatabaseHandler extends Configs {
             while (resSet.next()) {
                 String name = resSet.getString(Const.USERNAME);
                 String pas = resSet.getString(Const.USER_PASSWORD);
+                int role = resSet.getInt(Const.USER_ROLE);
                 //user = new User();
                 user.setPassword(pas);
                 user.setUsername(name);
+                user.setRole(role);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -415,5 +418,71 @@ public class DatabaseHandler extends Configs {
         return passengers;
 
     }
+
+    public void addPassenger(Passenger passenger) {
+        String insert = "INSERT INTO " + Const.PASSENGER_TABLE + "(" +
+                Const.PASSENGER_ID + "," + Const.PASSPORT_NUM + ","
+                + Const.FIRST_NAME + "," + Const.LAST_NAME + ","
+                + Const.COUNTRY + "," + Const.USERNAME + ")" +
+                "VALUES(?,?,?,?,?,?)";
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(insert);
+
+            prSt.setInt(1, passenger.getPassId());
+            prSt.setString(2, passenger.getPassportNum());
+            prSt.setString(3, passenger.getFirstName());
+            prSt.setString(4, passenger.getLastName());
+            prSt.setString(5, passenger.getCountry());
+            prSt.setString(6, passenger.getUsername());
+            prSt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public void deletePassenger(int passengerId) throws SQLException, ClassNotFoundException {
+        ResultSet resSet = null;
+        String result = "";
+
+        String delete = "DELETE FROM " + Const.PASSENGER_TABLE +
+                " WHERE " + Const.PASSENGER_ID + " ='%s' ".formatted(passengerId);
+
+        // PreparedStatement prSt = getDbConnection().prepareStatement(select);
+        PreparedStatement stmt = getDbConnection().prepareStatement(delete);
+        stmt.executeUpdate(delete);
+    }
+
+    public ArrayList getTicketsForAdmin() {
+        ResultSet resSet = null;
+        ArrayList<Ticket> tickets = new ArrayList<Ticket>();
+        String result = "";
+
+            String select = "SELECT * FROM " + Const.TICKET_TABLE ;
+            try {
+                PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+                resSet = prSt.executeQuery(select);
+                while (resSet.next()) {
+
+                    var tr = resSet.getInt(Const.TRAIN_CAR);
+                    var sn = resSet.getInt(Const.SEAT_NUM);
+                    var st = resSet.getString(Const.SEAT_TYPE);
+                    var fc = resSet.getString(Const.FLIGHT_CODE);
+                    var tc = resSet.getInt(Const.TICKET_CODE);
+                    var pi = resSet.getInt(Const.PASSENGER_ID);
+
+                    tickets.add(new Ticket(tr, sn, st, fc, tc,pi));
+                    System.out.println();
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        return tickets;
+        }
 }
 
