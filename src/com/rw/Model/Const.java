@@ -34,6 +34,7 @@ public class Const {
     public static final String BOOKING_TABLE = "booking";
     public static final String FLIGHT_DISTANCE = "flight_distance";
     public static final String ARR_DATE = "arr_date";
+    public static final String PRICE = "ticket_price";
 
 
 

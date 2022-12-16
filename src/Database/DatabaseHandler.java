@@ -73,6 +73,7 @@ public class DatabaseHandler extends Configs {
     }
 
     public User getUser(User user) {
+        var userRes = new User();
         ResultSet resSet = null;
         String result = "";
         String select = "SELECT * FROM " + Const.USER_TABLE + " WHERE " +
@@ -86,16 +87,16 @@ public class DatabaseHandler extends Configs {
                 String pas = resSet.getString(Const.USER_PASSWORD);
                 int role = resSet.getInt(Const.USER_ROLE);
                 //user = new User();
-                user.setPassword(pas);
-                user.setUsername(name);
-                user.setRole(role);
+                userRes.setPassword(pas);
+                userRes.setUsername(name);
+                userRes.setRole(role);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        return user;
+        return userRes;
     }
 
     public ArrayList<Price> getPriceFromDb(Price price) {
@@ -166,8 +167,8 @@ public class DatabaseHandler extends Configs {
         //To do change num of seats in db
         String insert = "INSERT INTO " + Const.TICKET_TABLE + "(" +
                 Const.TRAIN_CAR + "," + Const.SEAT_NUM + "," + Const.SEAT_TYPE + ","
-                + Const.PASSENGER_ID + "," + Const.FLIGHT_CODE + ")" +
-                "VALUES(?,?,?,?,?)";
+                + Const.PASSENGER_ID + "," + Const.FLIGHT_CODE + "," + Const.TICKET_CODE + ")" +
+                "VALUES(?,?,?,?,?,?)";
         try {
             PreparedStatement prSt = getDbConnection().prepareStatement(insert, Statement.RETURN_GENERATED_KEYS);
             prSt.setInt(1, ticket.getTrainCar());
@@ -175,7 +176,7 @@ public class DatabaseHandler extends Configs {
             prSt.setString(3, ticket.getSeatType());
             prSt.setInt(4, ticket.getPassId());
             prSt.setString(5, ticket.getFlightCode());
-            // prSt.setInt(6, null);
+             prSt.setInt(6, ticket.getTicketCode());
             int affectedRows = prSt.executeUpdate();
 
             if (affectedRows == 0) {
@@ -207,8 +208,30 @@ public class DatabaseHandler extends Configs {
         }
         return ticket;
     }
+    public void addTicketInDb(Ticket ticket) throws SQLException, ClassNotFoundException {
+        //To do set in ticket db
+        //To do set in booking db
+        //To do change num of seats in db
+        String insert = "INSERT INTO " + Const.TICKET_TABLE + "(" +
+                Const.TRAIN_CAR + "," + Const.SEAT_NUM + "," + Const.SEAT_TYPE + ","
+                + Const.PASSENGER_ID + "," + Const.FLIGHT_CODE + "," + Const.TICKET_CODE + ")" +
+                "VALUES(?,?,?,?,?,?)";
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(insert);
+            prSt.setInt(1, ticket.getTrainCar());
+            prSt.setInt(2, ticket.getSeatNum());
+            prSt.setString(3, ticket.getSeatType());
+            prSt.setInt(4, ticket.getPassId());
+            prSt.setString(5, ticket.getFlightCode());
+             prSt.setInt(6, ticket.getTicketCode());
+             prSt.executeUpdate();
 
-    private void addInBookingDb(Ticket ticket) {
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+    public void addInBookingDb(Ticket ticket) {
         String insert = "INSERT INTO " + Const.BOOKING_TABLE + "(" +
                 Const.TICKET_CODE + ")" +
                 "VALUES(?)";
@@ -484,5 +507,104 @@ public class DatabaseHandler extends Configs {
             }
         return tickets;
         }
+
+    public void deleteTicket(int ticketCode) throws SQLException, ClassNotFoundException {
+        ResultSet resSet = null;
+        String result = "";
+
+        String delete = "DELETE FROM " + Const.TICKET_TABLE +
+                " WHERE " + Const.TICKET_CODE + " ='%s' ".formatted(ticketCode);
+
+        // PreparedStatement prSt = getDbConnection().prepareStatement(select);
+        PreparedStatement stmt = getDbConnection().prepareStatement(delete);
+        stmt.executeUpdate(delete);
+    }
+    public void addPrice(Price price) throws SQLException, ClassNotFoundException {
+        String insert = "INSERT INTO " + Const.PRICE_TABLE + "(" +
+                Const.FLIGHT_CODE + "," + Const.SEAT_TYPE + ","
+                + Const.PRICE + ")" +
+                "VALUES(?,?,?)";
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(insert);
+
+            prSt.setString(1, price.getFlightCode());
+            prSt.setString(2, price.getSeatType());
+            prSt.setDouble(3, price.getPrice());
+            prSt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public ArrayList<Price> getPricesForAdmin() {
+        var prices = new ArrayList<Price>();
+        String select = "SELECT * FROM " + Const.PRICE_TABLE ;
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+            var resSet = prSt.executeQuery(select);
+            while (resSet.next()) {
+                String flcode = resSet.getString("flight_code");
+                String seatType = resSet.getString("seat_type");
+                Double prc = resSet.getDouble("ticket_price");
+                prices.add(new Price(flcode, seatType, prc));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return prices;
+    }
+
+    public void deletePrice(Price price) throws SQLException, ClassNotFoundException {
+        ResultSet resSet = null;
+        String result = "";
+
+        String delete = "DELETE FROM " + Const.PRICE_TABLE +
+                " WHERE " + Const.FLIGHT_CODE + " ='%s' AND ".formatted(price.getFlightCode())
+                + Const.SEAT_TYPE + " ='%s'".formatted(price.getSeatType());
+
+        // PreparedStatement prSt = getDbConnection().prepareStatement(select);
+        PreparedStatement stmt = getDbConnection().prepareStatement(delete);
+        stmt.executeUpdate(delete);
+    }
+    public ArrayList<Booking> getBookingsForAdmin() throws SQLException, ClassNotFoundException {
+        var bookings = new ArrayList<Booking>();
+        String select = "SELECT * FROM " + Const.BOOKING_TABLE;
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(select);
+
+            ResultSet resSet = prSt.executeQuery(select);
+            while (resSet.next()) {
+                var ticketCode = resSet.getInt(Const.TICKET_CODE);
+                bookings.add(new Booking(ticketCode));
+
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        return bookings;
+    }
+    public void deleteBookingForAdmin(Booking booking) throws SQLException, ClassNotFoundException {
+
+        String delete = "DELETE  FROM " + Const.BOOKING_TABLE +
+                        " WHERE " + Const.TICKET_CODE + " ='%s' ".formatted(booking.getTicketCode());
+        try {
+            PreparedStatement prSt = getDbConnection().prepareStatement(delete);
+            prSt.executeUpdate(delete);
+
+            } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 }
 

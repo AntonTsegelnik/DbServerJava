@@ -13,27 +13,24 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ThreadClientHandler implements Runnable {
-    public  Socket clientDialog;
+    public Socket clientDialog;
     public static Lock lock = new ReentrantLock();
 
 
     public ThreadClientHandler(Socket client) {
-            clientDialog = client;
-            //this.lock = lock;
+        clientDialog = client;
+        //this.lock = lock;
     }
 
     @Override
     public void run() {
-        try  {
+        try {
             lock.lock();
 
-// становимся в ожидание подключения к сокету под именем - "client" на серверной стороне
 
-
-// после хэндшейкинга сервер ассоциирует подключающегося клиента с этим сокетом-соединением
             System.out.print("Connection accepted.");
 
-// инициируем каналы общения в сокете, для сервера
+
 
             // канал чтения из сокета
             ObjectInputStream in = new ObjectInputStream(clientDialog.getInputStream());
@@ -42,45 +39,31 @@ public class ThreadClientHandler implements Runnable {
             ObjectOutputStream out = new ObjectOutputStream(clientDialog.getOutputStream());
             ClientRequest clientRequest = null;
 
-// начинаем диалог с подключенным клиентом в цикле, пока сокет не закрыт
+
             if (!clientDialog.isClosed()) {
 
 
-// сервер ждёт в канале чтения (inputstream) получения данных клиента
                 clientRequest = (ClientRequest) in.readObject();
                 router(clientRequest, out);
 
-
-// после получения данных считывает их
-
-
-// и выводит в консоль
-
-
-// если условие окончания работы не верно - продолжаем работу - отправляем эхо обратно клиенту
-
                 System.out.println("Server Wrote message to client.");
 
-// освобождаем буфер сетевых сообщений
                 out.flush();
 
             }
 
-// если условие выхода - верно выключаем соединения
+
             System.out.println("Client disconnected");
             System.out.println("Closing connections & channels.");
 
-            // закрываем сначала каналы сокета !
+
             in.close();
             out.close();
 
-            // потом закрываем сокет общения на стороне сервера!
+
             clientDialog.close();
 
-            // потом закрываем сокет сервера который создаёт сокеты общения
-            // хотя при многопоточном применении его закрывать не нужно
-            // для возможности поставить этот серверный сокет обратно в ожидание нового подключения
-            // server.close();
+
             System.out.println("Closing connections & channels - DONE.");
 
             //Если надо проверить синхронизацию
@@ -95,6 +78,7 @@ public class ThreadClientHandler implements Runnable {
             lock.unlock();
         }
     }
+
     public static void router(ClientRequest clientRequest, ObjectOutputStream out) throws IOException, SQLException, ClassNotFoundException {
         // factory pattern
         if (clientRequest.requestType.equals("registration")) {
@@ -126,6 +110,12 @@ public class ThreadClientHandler implements Runnable {
 
             out.writeObject(res);
         }
+        if (clientRequest.requestType.equals("getPricesForAdmin")) {
+
+            var res = getPricesForAdmin();
+
+            out.writeObject(res);
+        }
         if (clientRequest.requestType.equals("setPassenger")) {
             var passenger = (Passenger) clientRequest;
             var pasIdGenerated = setPassenger(passenger);
@@ -133,73 +123,120 @@ public class ThreadClientHandler implements Runnable {
             out.writeObject(pasIdGenerated);
 
         }
-        if (clientRequest.requestType.equals("bookTicket")){
-            var ticket = (Ticket)clientRequest;
+        if (clientRequest.requestType.equals("bookTicket")) {
+            var ticket = (Ticket) clientRequest;
             var dbHandler = new DatabaseHandler();
             var bookingTicket = dbHandler.setTicketInDbBooking(ticket);
             out.writeObject(bookingTicket);
         }
-        if (clientRequest.requestType.equals("getTickets")){
-            var user = (AuthorizationRequest)clientRequest;
+        if (clientRequest.requestType.equals("getTickets")) {
+            var user = (AuthorizationRequest) clientRequest;
             var dbHandler = new DatabaseHandler();
             var getUsersPassengersId = dbHandler.getUsersPassengersId(user.username);
             var tickets = dbHandler.getTickets(getUsersPassengersId);
 
             out.writeObject(tickets);
         }
-        if (clientRequest.requestType.equals("getFlights")){
+        if (clientRequest.requestType.equals("getFlights")) {
 
             var dbHandler = new DatabaseHandler();
             var flights = dbHandler.getFlights();
 
             out.writeObject(flights);
         }
-        if (clientRequest.requestType.equals("deleteFlight")){
-            var  flight = (FlightsRequest) clientRequest;
+        if (clientRequest.requestType.equals("deleteFlight")) {
+            var flight = (FlightsRequest) clientRequest;
             var dbHandler = new DatabaseHandler();
             dbHandler.deleteFlight(flight.getFlightCode());
             var servresp = new ServerResponse();
             servresp.body = "ok";
             out.writeObject(servresp);
         }
-        if (clientRequest.requestType.equals("addFlight")){
-            var  flight = (FlightsRequest) clientRequest;
+        if (clientRequest.requestType.equals("addFlight")) {
+            var flight = (FlightsRequest) clientRequest;
             var dbHandler = new DatabaseHandler();
             dbHandler.addFlight(flight);
             var servresp = new ServerResponse();
             servresp.body = "ok";
             out.writeObject(servresp);
         }
-        if (clientRequest.requestType.equals("getPassengers")){
-            var pasRequest = (Passenger)clientRequest;
+        if (clientRequest.requestType.equals("getPassengers")) {
+            var pasRequest = (Passenger) clientRequest;
             var dbHandler = new DatabaseHandler();
             var passengers = dbHandler.getPassengers();
 
             out.writeObject(passengers);
         }
-        if (clientRequest.requestType.equals("addPassenger")){
-            var  passenger = (Passenger) clientRequest;
+        if (clientRequest.requestType.equals("addPassenger")) {
+            var passenger = (Passenger) clientRequest;
             var dbHandler = new DatabaseHandler();
             dbHandler.addPassenger(passenger);
             var servresp = new ServerResponse();
             servresp.body = "ok";
             out.writeObject(servresp);
         }
-        if (clientRequest.requestType.equals("deletePassenger")){
-            var  passenger = (Passenger) clientRequest;
+        if (clientRequest.requestType.equals("deletePassenger")) {
+            var passenger = (Passenger) clientRequest;
             var dbHandler = new DatabaseHandler();
             dbHandler.deletePassenger(passenger.getPassId());
             var servresp = new ServerResponse();
             servresp.body = "ok";
             out.writeObject(servresp);
         }
-        if (clientRequest.requestType.equals("getTicketsForAdmin")){
-            var  tck = (Ticket) clientRequest;
+        if (clientRequest.requestType.equals("getTicketsForAdmin")) {
+            var tck = (Ticket) clientRequest;
             var dbHandler = new DatabaseHandler();
-            var ticks =  dbHandler.getTicketsForAdmin();
+            var ticks = dbHandler.getTicketsForAdmin();
             out.writeObject(ticks);
         }
+        if (clientRequest.requestType.equals("deleteTicket")) {
+            var tck = (Ticket) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.deleteTicket(tck.getTicketCode());
+            var res = dbHandler.getTicketsForAdmin();
+            out.writeObject(res);
+        }
+        if (clientRequest.requestType.equals("addTicket")) {
+            var tck = (Ticket) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.addTicketInDb(tck);
+            var res = dbHandler.getTicketsForAdmin();
+            out.writeObject(res);
+        }
+        if (clientRequest.requestType.equals("addPrice")) {
+            var price = (Price) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.addPrice(price);
+        }
+        if (clientRequest.requestType.equals("deletePrice")) {
+            var price = (Price) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.deletePrice(price);
 
+        }
+        if (clientRequest.requestType.equals("deleteBooking")) {
+            var booking = (Booking) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.deleteBookingForAdmin(booking);
+
+        }
+        if (clientRequest.requestType.equals("getBookings")) {
+            var booking = (Booking) clientRequest;
+            var dbHandler = new DatabaseHandler();
+
+            out.writeObject(dbHandler.getBookingsForAdmin());
+        }
+        if (clientRequest.requestType.equals("addInBooking")) {
+            var ticket = (Ticket) clientRequest;
+            var dbHandler = new DatabaseHandler();
+            dbHandler.addInBookingDb(ticket);
+        }
+    }
+
+    private static ArrayList<Price> getPricesForAdmin() {
+        DatabaseHandler dbHandler = new DatabaseHandler();
+        var result = dbHandler.getPricesForAdmin();
+        return result;
     }
 
     private static ArrayList<Price> getPrice(Price price) {
@@ -211,9 +248,10 @@ public class ThreadClientHandler implements Runnable {
     private static User loginUser(User user) {
         String username = "";
         DatabaseHandler dbHandler = new DatabaseHandler();
-        user = dbHandler.getUser(user);
+        var userRes = dbHandler.getUser(user);
 
-        return user;
+
+        return userRes;
     }
 
 
