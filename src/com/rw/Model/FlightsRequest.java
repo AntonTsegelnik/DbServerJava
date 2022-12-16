@@ -7,10 +7,12 @@ import java.util.Date;
 public class FlightsRequest extends ClientRequest {
     private String FlightCode;
     private String Where;
+    private double FlightDistance;
 
     private String WhereTo;
 
     private LocalDate Date;
+    private LocalDate DateAr;
     private String Time;
     private String TimeAr;
     private int Coupe;
@@ -31,7 +33,19 @@ public class FlightsRequest extends ClientRequest {
         this.Res = reser;
         this.Seats = seats;
     }
-
+    public FlightsRequest(String where, String whereTo, LocalDate date, String time, String TimeAr, String flightCode, int coupe, int reser, int seats, LocalDate dateAr,double flightDistance){
+        this.Where = where;
+        this.WhereTo = whereTo;
+        this.Date = date;
+        this.Time = time;
+        this.TimeAr = TimeAr;
+        this.FlightCode = flightCode;
+        this.Coupe = coupe;
+        this.Res = reser;
+        this.Seats = seats;
+        this.DateAr = dateAr;
+        this.FlightDistance = flightDistance;
+    }
     public String getTimeAr() {
         return TimeAr;
     }
@@ -110,5 +124,21 @@ public class FlightsRequest extends ClientRequest {
 
     public void setSeats(int seats) {
         Seats = seats;
+    }
+
+    public LocalDate getDateAr() {
+        return DateAr;
+    }
+
+    public void setDateAr(LocalDate dateAr) {
+        DateAr = dateAr;
+    }
+
+    public double getFlightDistance() {
+        return FlightDistance;
+    }
+
+    public void setFlightDistance(double flightDistance) {
+        FlightDistance = flightDistance;
     }
 }

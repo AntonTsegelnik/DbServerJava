@@ -1,18 +1,29 @@
 package com.rw.Model;
 
-public class Passenger {
+public class Passenger extends ClientRequest{
     private int PassId;
 
     private String FirstName;
+    private String LastName;
     private String Country;
     private String PassportNum;
     private String Username;
+    public Passenger(){}
+    public Passenger( String firstName, String lastName, String country, String passportNum, String username) {
 
-    public Passenger(int passId, String firstName, String lastName, String country, String passportNum, String username) {
-        PassId = passId;
         FirstName = firstName;
+        LastName = lastName;
         Country = country;
         PassportNum = passportNum;
+        Username = username;
+    }
+    public Passenger( String firstName, String lastName, String country, String passportNum, int PassId, String username) {
+
+        FirstName = firstName;
+        LastName = lastName;
+        Country = country;
+        PassportNum = passportNum;
+        this.PassId = PassId;
         Username = username;
     }
 
@@ -54,5 +65,13 @@ public class Passenger {
 
     public void setUsername(String username) {
         Username = username;
+    }
+
+    public String getLastName() {
+        return LastName;
+    }
+
+    public void setLastName(String lastName) {
+        LastName = lastName;
     }
 }
